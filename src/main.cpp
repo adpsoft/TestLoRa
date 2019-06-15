@@ -7,7 +7,7 @@
 byte localAddress = 0xBB;     // address of this device
 byte destination = 0xFF;      // destination to send to
 
-byte msgCount = 0;            // count of outgoing messages
+unsigned int msgCount = 0;            // count of outgoing messages
 
 void sendMessage(const String &outgoing);
 void onReceive(int packetSize);
@@ -50,7 +50,7 @@ void DisplayData(String rssi, String packet, String id){
 }
 
 void __unused loop() {
-    String message = "Hello World!";   // send a message
+    String message = "Hello World RND(" + String(random(1000)) + ")!";   // send a message
     sendMessage(message);
     Serial.println("Sending " + message);
 
@@ -63,7 +63,7 @@ void sendMessage(const String &outgoing) {
     LoRa.beginPacket();                   // start packet
     LoRa.write(destination);              // add destination address
     LoRa.write(localAddress);             // add sender address
-    LoRa.write(msgCount);                 // add message ID
+    LoRa.write(reinterpret_cast<const uint8_t *>(&msgCount), sizeof(unsigned int));                 // add message ID
     LoRa.write(outgoing.length());        // add payload length
     LoRa.print(outgoing);                 // add payload
     LoRa.endPacket();                     // finish packet and send it
@@ -76,7 +76,9 @@ void onReceive(int packetSize) {
     // read packet header bytes:
     int recipient = LoRa.read();          // recipient address
     byte sender = LoRa.read();            // sender address
-    byte incomingMsgId = LoRa.read();     // incoming msg ID
+    //byte incomingMsgId = LoRa.read();     // incoming msg ID
+    unsigned incomingMsgId;
+    LoRa.readBytes(reinterpret_cast<uint8_t *>(&incomingMsgId), sizeof(unsigned int));
     byte incomingLength = LoRa.read();    // incoming msg length
 
     String incoming = "";                 // payload of packet
